@@ -1,0 +1,68 @@
+# create pipelines with some name
+name: mli10 app containerization pipelines
+# Trigger -- when this pipleline should start
+on:
+  push:
+    branches:
+      - "dev"
+
+# jobs for performing operations
+jobs:
+  mli10-sast-job:  
+    runs-on: self-hosted
+    steps:
+      - name: checking docker version and sonarqube-scanner
+        run: |
+          date
+          # sonar-scanner --version
+      - name: fetch git code
+        uses: actions/checkout@v4
+
+      
+      - name: using local sonar runner
+        run: |
+          pwd
+           C:\Users\user\Downloads\sonar-scanner\sonar-scanner-5.0.1.3006-windows\bin\sonar-scanner.bat -D"sonar.projectKey=nebuld" -D"sonar.sources=." -D"sonar.host.url=${{ secrets.SONAR_HOST_URL }}" -D"sonar.token=${{ secrets.SONAR_TOKEN }}"
+      - name: using upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mli10-artifact
+          path: |
+            .
+            !**/.git*
+            !**/*.md
+            
+
+  mli10-build-job:
+    runs-on: ubuntu-latest
+    needs: mli10-sast-job
+    steps:
+      - name: just check general messages
+        run: |
+          echo "docker related details"
+          docker version
+          docker-compose version
+      - name: downloading artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mli10-artifact
+          path: .
+      - name: docker compose to build and test
+        run: |
+          ls -a
+          docker-compose up -d --build
+          sleep 2
+          docker-compose ps
+      - name: pushing above image toecr
+        run: |
+          echo " you can try manual approach"
+          echo "test"
+      - name: ecr-publish
+        uses: bitovi/github-actions-deploy-aws-ecr-registry@v0.1.0
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_default_region: us-east-1
+          aws_ecr_repo_name: mli10repo 
+          aws_ecr_repo_create: true   
+      

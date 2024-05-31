@@ -1,0 +1,105 @@
+# create pipelines with some name
+name: michelle app containerization pipeline 
+# Trigger -- when this pipeline should start
+on:
+  push:
+    branches:
+      - "dev"
+# jobs for performing operatiosn 
+jobs:
+  mli10-image-build:
+    runs-on: ubuntu-latest
+    # this server will be provision by github backen for this job
+    steps:
+      - name: run some basic commands to verify again
+        run: |
+          uname -r 
+          whoami
+          cat /etc/os-release 
+          docker version 
+          docker-compose version 
+          # sonar-scanner --version 
+      - name: using pre-desing github workflow to get copy gitrepo code to runners machine 
+        uses: actions/checkout@v4 
+
+      - name: Official SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2.1.0
+        with:
+          projectBaseDir: ./python-app-secret
+          args: >
+            -Dsonar.projectKey=nebuld
+            -Dsonar.exclusions=ecr/**,Dockerfile,compose.yaml,*.html
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: verify github code and use docker compose to build and create 
+        run: |
+          ls  -a 
+          # cd  python-app-secret
+          docker-compose  up -d  
+          sleep 2 
+          docker-compose ps 
+          sleep 1 
+          docker-compose logs
+      - name: Build an image from Dockerfile
+        run: |
+          # cd python-app-secret
+          docker build -t docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli110webapp:bmov${{ github.sha }} .
+          
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref:  'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10webapp:bmov${{ github.sha }}'
+          format: 'table'
+          exit-code: '0' # exit code non zero terminate pipeline
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: try to login from runner to docker hub account 
+        uses: docker/login-action@v3 
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: pushing image to docker hub 
+        run: |
+          echo "please wait while image is getting pushed"
+          docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10webapp:bmov${{ github.sha }}
+      - name: using upload artifacts 
+        uses: actions/upload-artifact@v4
+        with:
+          name: mli10-artifact
+          path: |
+            ./mli10-ecs
+  mli10-cdk-build:
+    runs-on: ubuntu-latest
+    needs: mli10-image-build
+    steps:          
+      - name: installing node 20 cd m
+        uses: actions/setup-node@v2 
+        with:
+          node-version: '20'
+      
+      - name: downloading artifacts 
+        uses: actions/download-artifact@v4
+        with:
+          name: mli10-artifact
+          path: .            
+      
+      - name: install npm modules for ecs 
+        run: |
+          node -v 
+          npm install 
+      - name: setup aws login details 
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} 
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name:  cdk deploy ecs code try 1 
+        run: |
+          
+          # npx cdk bootstrap 
+          npx cdk deploy --context  imageTag=${{ github.sha}} --require-approval never

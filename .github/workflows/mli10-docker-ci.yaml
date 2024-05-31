@@ -1,0 +1,67 @@
+# create pipelines with some name
+name: mli10 app containerization pipelines
+# Trigger -- when this pipleline should start
+on:
+  push:
+    branches:
+      - "dev1"
+
+# jobs for performing operations
+jobs:
+  mli10-image-build:
+    # runs-on: ubuntu-latest
+    runs-on: self-hosted
+    # this server will be provision by github backen for this job
+    steps:
+      - name: run some basic commands on above server to verify
+        run: |
+          uname -r
+          whoami
+          cat /etc/os-release
+          docker version
+          docker-compose 
+          # sonarqube-scanner --version
+      - name: using pre-design github workflow to get copy gitrepo code to runners machine
+        uses: actions/checkout@v4
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2.1.0
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=nebuld
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      
+
+      - name: verify github code
+        run: |
+          ls -a
+          docker-compose up -d
+          sleep 2
+          docker-compose ps 
+
+      - name: verify health check page by access it usign postman / curl 
+        run: |
+          echo  "access health.html page using curl "
+          curl -f  http://localhost:1234/health.html
+          # here we will get http response code 200 
+
+      - name: try to login from runner to docker hub account 
+        uses: docker/login-action@v3 
+        with:
+          username: ${{ secrets.MLI10_USER }}
+          password: ${{ secrets.MLI10_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: docker.io/${{ secrets.MLI10_USER }}/mli10-ui:uiversion001
+
+      - name: docker logout from runner after pushing 
+        run: docker logout    
+        
