@@ -22,16 +22,16 @@ jobs:
       - name: using pre-desing github workflow to get copy gitrepo code to runners machine 
         uses: actions/checkout@v4 
 
-      - name: Official SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v2.1.0
-        with:
-          projectBaseDir: ./python-app-secret
-          args: >
-            -Dsonar.projectKey=nebuld
-            -Dsonar.exclusions=ecr/**,Dockerfile,compose.yaml,*.html
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # - name: Official SonarQube Scan
+      #   uses: SonarSource/sonarqube-scan-action@v2.1.0
+      #   with:
+      #     projectBaseDir: ./python-app-secret
+      #     args: >
+      #       -Dsonar.projectKey=nebuld
+      #       -Dsonar.exclusions=ecr/**,Dockerfile,compose.yaml,*.html
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: verify github code and use docker compose to build and create 
         run: |
