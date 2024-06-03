@@ -22,21 +22,21 @@ jobs:
       - name: using pre-desing github workflow to get copy gitrepo code to runners machine 
         uses: actions/checkout@v4 
 
-      # - name: Official SonarQube Scan
-      #   uses: SonarSource/sonarqube-scan-action@v2.1.0
-      #   with:
-      #     projectBaseDir: ./python-app-secret
-      #     args: >
-      #       -Dsonar.projectKey=nebuld
-      #       -Dsonar.exclusions=ecr/**,Dockerfile,compose.yaml,*.html
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Official SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2.1.0
+        with:
+          projectBaseDir: ./python-app-secret
+          args: >
+            -Dsonar.projectKey=nebuld
+            -Dsonar.exclusions=ecr/**,Dockerfile,compose.yaml,*.html
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: verify github code and use docker compose to build and create 1
+      - name: verify github code and use docker compose to build and create 
         run: |
           ls  -a 
-          # cd  python-app-secret
+          cd  python-app-secret
           docker-compose  up -d  
           sleep 2 
           docker-compose ps 
@@ -44,13 +44,13 @@ jobs:
           docker-compose logs
       - name: Build an image from Dockerfile
         run: |
-          # cd python-app-secret
-          docker build -t docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli110webapp:bmov${{ github.sha }} .
+          cd python-app-secret
+          docker build -t docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10python:bmov${{ github.sha }} .
           
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref:  'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10webapp:bmov${{ github.sha }}'
+          image-ref:  'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10python:bmov${{ github.sha }}'
           format: 'table'
           exit-code: '0' # exit code non zero terminate pipeline
           ignore-unfixed: true
@@ -66,7 +66,7 @@ jobs:
       - name: pushing image to docker hub 
         run: |
           echo "please wait while image is getting pushed"
-          docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10webapp:bmov${{ github.sha }}
+          docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/mli10python:bmov${{ github.sha }}
       - name: using upload artifacts 
         uses: actions/upload-artifact@v4
         with:
@@ -101,5 +101,5 @@ jobs:
       - name:  cdk deploy ecs code try 1 
         run: |
           
-          # npx cdk bootstrap 
-          npx cdk deploy --context  imageTag=${{ github.sha}} --require-approval never
+          npx cdk bootstrap 
+          npx cdk deploy --no-rollback --require-approval never 
