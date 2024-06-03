@@ -33,7 +33,7 @@ jobs:
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: verify github code and use docker compose to build and create 
+      - name: verify github code and use docker compose to build and create 1
         run: |
           ls  -a 
           cd  python-app-secret
