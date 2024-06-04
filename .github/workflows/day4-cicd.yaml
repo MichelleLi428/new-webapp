@@ -36,7 +36,7 @@ jobs:
       - name: verify github code and use docker compose to build and create 
         run: |
           ls  -a 
-          cd  python-app-secret
+          cd python-app-secret
           docker-compose  up -d  
           sleep 2 
           docker-compose ps 
