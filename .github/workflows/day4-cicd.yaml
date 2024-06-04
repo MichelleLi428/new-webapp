@@ -1,4 +1,4 @@
-# create pipelines with some name
+# create pipelines with some name under new repo
 name: michelle app containerization pipeline 
 # Trigger -- when this pipeline should start
 on:
