@@ -25,38 +25,12 @@ export class Mli10EcsStack extends cdk.Stack {
     //   minCapacity: 1,
     //   maxCapacity: 5
     // });
-    // define container image tag as variable while doing cdk deploy 
-    const imageTag = this.node.tryGetContext('imageTag');
-    if (!imageTag) {
-      throw new Error('context variable name is required');
-    }
+
     // task Definition of farget launch type 
     const mli10TaskDef = new ecs.FargateTaskDefinition(this,'mli10',{
       cpu:  256,
       memoryLimitMiB: 512
        
-    });
-
-    // adding container info 
-    const container = ashuTaskDef.addContainer('ashucdkc1',{
-      image: ecs.ContainerImage.fromRegistry(`dockerashu/mli10bmoweb:bmov${imageTag}`),
-      memoryLimitMiB: 256,
-      portMappings: [{ containerPort: 80 }]
-    });
-    //creation security group
-    const ashusecgroup = new ec2.SecurityGroup(this,'ashufirewallgrp',{
-      vpc: vpc,
-      description: 'allow ingress rules for 80 port'
-    });
-    ashusecgroup.addIngressRule(ec2.Peer.anyIpv4(),ec2.Port.tcp(80),'allow http traffic');
-    // creating service using above task defintion 
-    const service = new ecs.FargateService(this,'ashuECSserviceCDK',{
-      cluster,
-      taskDefinition: mli10TaskDef,
-      serviceName: 'ashu-svc-bycdk',
-      desiredCount: 1,
-      assignPublicIp: true,
-      securityGroups: [ashusecgroup]   // attaching security group 
     });
     // adding container info 
     const container = mli10TaskDef.addContainer('mli10cdkc1',{
