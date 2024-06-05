@@ -1,0 +1,7 @@
+version: '3.8'
+services:
+  mli10app:
+    image: mli10python:bmov1
+    build: .
+    container_name: mli10pyc1
+    tty: true
